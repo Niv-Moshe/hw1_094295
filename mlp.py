@@ -99,6 +99,8 @@ def impute_missing_vals(df, attributes):
 
 
 def BO_TPE_mlp(train, val):
+    print("Hyper parameter tuning...")
+
     def objective(params):
         # clf = MLPClassifier(params,
         #                     random_state=42, max_iter=300, verbose=False)
@@ -114,11 +116,12 @@ def BO_TPE_mlp(train, val):
         f1 = f1_score(val[labels].to_numpy(), np.array(y_val_class))
         loss = 1 - f1
         return {'loss': loss, 'params': params, 'status': STATUS_OK}
+
     early_stoppings = [True, False]
-    hidden_layer_sizes = [(1000, 1000, 1000), (100, 100, 100), (100, 100, 100, 100), (100, 100, 100, 100, 100)]
+    hidden_layer_sizes = [(1000, 1000, 1000), (100, 100), (100, 100, 100), (100, 100, 100, 100)]
     batch_sizes = [32, 64, 128]
     learning_rates = [0.01, 0.001, 1e-4, 0.1]
-    alphas = [0.0, 0.0001, 0.001, 0.01, 0.1]
+    alphas = [0.0, 0.0001, 0.001, 0.01]
 
     space = {'early_stopping': hp.choice('early_stopping', early_stoppings),
              'hidden_layer_sizes': hp.choice('hidden_layer_sizes', hidden_layer_sizes),
@@ -152,8 +155,8 @@ def train(features_to_use=used_features):
     # best_param = {'early_stopping': True, 'hidden_layer_sizes': (100, 100, 100, 100, 100), 'batch_size': 128,
     #               'learning_rate_init': 0.0001, 'alpha': 0.1}
     # print(f"{best_param=}")
-    # print()
-    # print("Training...")
+    print()
+    print("Training...")
     # clf = MLPClassifier(hidden_layer_sizes=best_param['hidden_layer_sizes'],
     #                     batch_size=best_param['batch_size'],
     #                     alpha=best_param['alpha'],
@@ -164,13 +167,13 @@ def train(features_to_use=used_features):
     clf = MLPClassifier(batch_size=64, max_iter=300, random_state=42, verbose=True)
     clf.fit(train_df[features_to_use].values, train_df[labels].values.ravel())
     # save
-    with open('model.pkl', 'wb') as f:
+    with open('mlp_model.pkl', 'wb') as f:
         pickle.dump(clf, f)
 
 
 def predict(test_directory_path, features_to_use=used_features, is_shap=False):
     # load
-    with open('model.pkl', 'rb') as f:
+    with open('mlp_model.pkl', 'rb') as f:
         clf = pickle.load(f)
     ########### Test: #############
     print("\nTest set:")
@@ -235,13 +238,8 @@ def check_predictions(prediction_path, test_directory_path):
     print(f"F1 score: {f1}")
 
 
-def main():
-    # train()
+if __name__ == "__main__":
+    train()
     predict('data/test', is_shap=True)
     check_predictions('prediction.csv', 'data/test')
-    pass
-
-
-if __name__ == "__main__":
-    main()
     pass
