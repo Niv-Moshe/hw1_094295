@@ -2,7 +2,7 @@ import random
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
+from sklearn.metrics import f1_score, roc_auc_score, accuracy_score, confusion_matrix
 from keras.layers import LSTM, Dense, Bidirectional
 from keras.models import Sequential
 from keras.metrics import FalseNegatives, FalsePositives, TrueNegatives, TruePositives, BinaryCrossentropy
@@ -13,7 +13,9 @@ from keras_tuner import Hyperband, RandomSearch, Objective
 from hyperopt import hp
 from tqdm import tqdm
 from itertools import product
-
+import matplotlib.pyplot as plt
+import shap
+import seaborn as sns
 import os
 import warnings
 import tensorflow as tf
@@ -43,7 +45,7 @@ used_features = [col for col in nonlabels if col not in unwanted_features]
 
 def get_filenames(directory_path):
     filepath = Path(directory_path)
-    filenames = [fname for fname in filepath.iterdir() if fname.is_file() and fname.suffix == '.psv']  # [:1000]
+    filenames = [fname for fname in filepath.iterdir() if fname.is_file() and fname.suffix == '.psv']  # [:100]
     return filenames
 
 
@@ -308,29 +310,29 @@ def train(features_to_use=used_features, make_matrix=True):
     ########### Models: #############
     # print(f"Running my hyper-parameter tuning")
     # best_model, best_hps, model_results = my_hyperparameter_tuning(x_train, y_one_hot_train, x_val, y_one_hot_val)
-    print(f"Running hyper-parameter tuning")
-    tuner, best_hps = hyperparameter_tuning(x_train, y_one_hot_train, x_val, y_one_hot_val)
-    print(f"{best_hps=}")
-    # best_hps = {'num_of_neurons_lstm': 128, 'num_of_neurons_dense': 64, 'l2': 0.0}
+    # print(f"Running hyper-parameter tuning")
+    # tuner, best_hps = hyperparameter_tuning(x_train, y_one_hot_train, x_val, y_one_hot_val)
+    # print(f"{best_hps=}")
+    best_hps = {'num_of_neurons_lstm': 128, 'num_of_neurons_dense': 64, 'l2': 0.0}
 
-    # model = Sequential()
-    # model.add(LSTM(units=best_hps.get('num_of_neurons_lstm'), kernel_regularizer=L2(best_hps.get('l2')),
-    #                return_sequences=True, input_shape=(None, len(features_to_use))))
-    # model.add(LSTM(units=best_hps.get('num_of_neurons_lstm'), kernel_regularizer=L2(best_hps.get('l2'))))
-    # model.add(Dense(units=best_hps.get('num_of_neurons_dense'), kernel_regularizer=L2(best_hps.get('l2')),
-    #                 activation='relu'))
-    # model.add(Dense(units=2, kernel_regularizer=L2(best_hps.get('l2')), activation='softmax'))
-    # model.summary()
-    #
-    # print("Training...")
-    # model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[f1_score_mine, 'AUC', 'accuracy'])  # loss='mean_squared_error', metrics=['accuracy'])
-    # hist = model.fit(x_train, y_one_hot_train, epochs=3, batch_size=32, verbose=1, validation_data=(x_val, y_one_hot_val), shuffle=True)
-    # print(f"{hist.history=}")
-    # model.save('lstm_model.h5')
+    model = Sequential()
+    model.add(LSTM(units=best_hps.get('num_of_neurons_lstm'), kernel_regularizer=L2(best_hps.get('l2')),
+                   return_sequences=True, input_shape=(None, len(features_to_use))))
+    model.add(LSTM(units=best_hps.get('num_of_neurons_lstm'), kernel_regularizer=L2(best_hps.get('l2'))))
+    model.add(Dense(units=best_hps.get('num_of_neurons_dense'), kernel_regularizer=L2(best_hps.get('l2')),
+                    activation='relu'))
+    model.add(Dense(units=2, kernel_regularizer=L2(best_hps.get('l2')), activation='softmax'))
+    model.summary()
+
+    print("Training...")
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=[f1_score_mine, 'AUC', 'accuracy'])  # loss='mean_squared_error', metrics=['accuracy'])
+    hist = model.fit(x_train, y_one_hot_train, epochs=3, batch_size=32, verbose=1, validation_data=(x_val, y_one_hot_val), shuffle=True)
+    print(f"{hist.history=}")
+    model.save('lstm_model.h5')
 
 
 
-def predict(test_directory_path, features_to_use=used_features):
+def predict(test_directory_path, features_to_use=used_features, is_shap=False):
     model = keras.models.load_model('lstm_model.h5', custom_objects={"f1_score_mine": f1_score_mine})
     ########### Test: #############
     print()
@@ -355,6 +357,43 @@ def predict(test_directory_path, features_to_use=used_features):
     pred_df = pd.DataFrame(data={'Id': test_pids, 'SepsisLabel': y_preds})
     pred_df.sort_values(by='Id', ascending=True, inplace=True)
     pred_df.to_csv('lstm_prediction.csv', index=False, header=False)
+
+    # confusion matrix
+    conf_mat = confusion_matrix(y_act, y_preds)
+    ax = sns.heatmap(conf_mat, annot=True, cmap='Blues')
+    ax.set_title('Seaborn Confusion Matrix with labels\n\n')
+    ax.set_xlabel('\nPredicted Values')
+    ax.set_ylabel('Actual Values ')
+    ## Ticket labels - List must be in alphabetical order
+    ax.xaxis.set_ticklabels(['False', 'True'])
+    ax.yaxis.set_ticklabels(['False', 'True'])
+    ## Display the visualization of the Confusion Matrix.
+    plt.show()
+
+    if is_shap:
+        print("Kmeans for shap values...")
+        # compute SHAP values
+        print(f"Loading lstm data")
+        x_train = np.load('lstm_data/x_train.npy')
+        # y_train = np.load('lstm_data/y_train.npy')
+        # train_pids = np.load('lstm_data/train_pids.npy')
+        # data = shap.kmeans(x_test, 100).data
+        explainer = shap.DeepExplainer(model, x_train[0].reshape(1, x_train.shape[1], x_train.shape[2]))
+        x_test = x_test[0].reshape(x_test.shape[1], x_test.shape[2])
+        shap_values = explainer.shap_values(x_test[0])
+
+
+        # explainer = shap.KernelExplainer(clf.predict, data)
+        # shap_values = explainer.shap_values(data)
+
+        print(f"Shap values length: {len(shap_values)}\n")
+        print(f"Sample shap value:\n{shap_values[0]}")
+        shap.summary_plot(shap_values, x_test[0], plot_type="bar",
+                          feature_names=features_to_use, plot_size=(12, 12), show=False)
+        plt.savefig('mlp_shap_pics/bar_plot.png')
+        shap.summary_plot(shap_values, feature_names=features_to_use, cmap=plt.get_cmap("winter_r"),
+                          plot_size=(10, 12), show=False)
+        plt.savefig('mlp_shap_pics/dot_plot.png')
 
     test_auc = roc_auc_score(y_act, y_pred[:, 1])
     print('test dataset AUC: ' + str(test_auc))
@@ -390,9 +429,8 @@ def check_predictions(prediction_path, test_directory_path):
 
 
 if __name__ == "__main__":
-    # features_to_use = nonlabels
-    train(make_matrix=False)
-    # predict('data/test')  # , features_to_use=features_to_use)
-    # check_predictions('lstm_prediction.csv', 'data/test')
+    # train(make_matrix=False)
+    predict('data/test', is_shap=False)
+    check_predictions('lstm_prediction.csv', 'data/test')
 
 

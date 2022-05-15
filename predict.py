@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 from tensorflow import keras
-
+from lstm import used_features, f1_score_mine, read_data, get_filenames, dfs_to_matrix
+import sys
 
 
 def predict(test_directory_path, features_to_use=used_features):
@@ -28,7 +29,13 @@ def predict(test_directory_path, features_to_use=used_features):
 
     pred_df = pd.DataFrame(data={'Id': test_pids, 'SepsisLabel': y_preds})
     pred_df.sort_values(by='Id', ascending=True, inplace=True)
-    pred_df.to_csv('prediction.csv', index=False)
-
-
+    pred_df.to_csv('prediction.csv', index=False, header=False)
     pass
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise Exception('Include the test directory as arguments, '
+                        'e.g., python test.py test_path')
+    test_path = sys.argv[1]
+    predict(test_path)
