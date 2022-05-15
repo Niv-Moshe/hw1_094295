@@ -193,7 +193,7 @@ def predict(test_directory_path, features_to_use=used_features, is_shap=False):
     y_pred_int = [int(y) for y in y_pred]
     pred_df = pd.DataFrame(data={'Id': test_pids, 'SepsisLabel': y_pred_int})
     pred_df.sort_values(by=['Id'], ascending=True, inplace=True)
-    pred_df.to_csv('mlp_prediction.csv', index=False)
+    pred_df.to_csv('mlp_prediction.csv', index=False, header=False)
 
     if is_shap:
         print("Kmeans for shap values...")
