@@ -1,6 +1,6 @@
 from pathlib import Path
 import pandas as pd
-from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
+from sklearn.metrics import f1_score, accuracy_score, roc_auc_score, confusion_matrix
 from sklearn.neural_network import MLPClassifier
 import numpy as np
 from hyperopt import STATUS_OK, hp, fmin, tpe
@@ -10,6 +10,7 @@ import random
 import shap
 import matplotlib.pyplot as plt
 import matplotlib
+import seaborn as sns
 
 random.seed(42)
 np.random.seed(42)
@@ -34,7 +35,7 @@ used_features = [col for col in nonlabels if col not in unwanted_features]
 
 def get_filenames(directory_path):
     filepath = Path(directory_path)
-    filenames = [fname for fname in filepath.iterdir() if fname.is_file() and fname.suffix == '.psv']  # [:100]
+    filenames = [fname for fname in filepath.iterdir() if fname.is_file() and fname.suffix == '.psv']  # [:1000]
     all_ids = []
 
     for filename in filenames:
@@ -146,8 +147,9 @@ def train(features_to_use=used_features):
 
     train_df_list = read_data(get_filenames('data/train'))
     all_train, _ = mean_df(train_df_list)
-    val = all_train.sample(frac=0.1, random_state=42)
-    train_df = all_train.drop(val.index)
+    # val = all_train.sample(frac=0.1, random_state=42)
+    # train_df = all_train.drop(val.index)
+    train_df = all_train
 
     ########### Model: #############
     print("\nMLP:")
@@ -164,7 +166,7 @@ def train(features_to_use=used_features):
     #                     early_stopping=best_param['early_stopping'],
     #                     max_iter=300, verbose=True, random_state=42)
     # clf.fit(train_df[features_to_use].values, train_df[labels].values.ravel())
-    clf = MLPClassifier(batch_size=64, max_iter=300, random_state=42, verbose=True)
+    clf = MLPClassifier(batch_size=64, max_iter=300, random_state=42, verbose=True, early_stopping=True)
     clf.fit(train_df[features_to_use].values, train_df[labels].values.ravel())
     # save
     with open('mlp_model.pkl', 'wb') as f:
@@ -195,16 +197,26 @@ def predict(test_directory_path, features_to_use=used_features, is_shap=False):
     pred_df.sort_values(by=['Id'], ascending=True, inplace=True)
     pred_df.to_csv('mlp_prediction.csv', index=False, header=False)
 
+    # confusion matrix
+    conf_mat = confusion_matrix(test[labels], y_pred_int, [0, 1])
+    ax = sns.heatmap(conf_mat, annot=True, cmap='Blues')
+    ax.set_title('Seaborn Confusion Matrix with labels\n\n')
+    ax.set_xlabel('\nPredicted Values')
+    ax.set_ylabel('Actual Values ')
+    ## Ticket labels - List must be in alphabetical order
+    ax.xaxis.set_ticklabels(['False', 'True'])
+    ax.yaxis.set_ticklabels(['False', 'True'])
+    ## Display the visualization of the Confusion Matrix.
+    plt.show()
+
     if is_shap:
         print("Kmeans for shap values...")
         data = shap.kmeans(test[features_to_use].values, 100).data
         explainer = shap.KernelExplainer(clf.predict, data)
-        # shap_test = explainer(test[features_to_use].values)
         shap_values = explainer.shap_values(data)
 
         print(f"Shap values length: {len(shap_values)}\n")
         print(f"Sample shap value:\n{shap_values[0]}")
-        # shap.plots.bar(shap_values)
         shap.summary_plot(shap_values, data, plot_type="bar",
                           feature_names=features_to_use, plot_size=(12, 12), show=False)
         plt.savefig('mlp_shap_pics/bar_plot.png')
@@ -215,9 +227,9 @@ def predict(test_directory_path, features_to_use=used_features, is_shap=False):
 
 
 def check_predictions(prediction_path, test_directory_path):
-    pred_df = pd.read_csv(prediction_path)  # should be sorted by ids ascending
-    ids_pred = pred_df['Id'].to_list()
-    y_preds = pred_df['SepsisLabel'].to_list()
+    pred_df = pd.read_csv(prediction_path, header=None)  # should be sorted by ids ascending
+    ids_pred = pred_df.iloc[:, 0].to_list()
+    y_preds = pred_df.iloc[:, 1].to_list()
     filenames = get_filenames(test_directory_path)  # messy file names
     y_true = []
     ids_true = []
@@ -239,7 +251,7 @@ def check_predictions(prediction_path, test_directory_path):
 
 
 if __name__ == "__main__":
-    # train()
-    # predict('data/test', is_shap=True)
-    check_predictions('mlp_prediction.csv', 'data/test')
+    train()
+    predict('data/test', is_shap=True)
+    # check_predictions('mlp_prediction.csv', 'data/test')
     pass

@@ -366,9 +366,9 @@ def predict(test_directory_path, features_to_use=used_features):
 
 
 def check_predictions(prediction_path, test_directory_path):
-    pred_df = pd.read_csv(prediction_path)  # should be sorted by ids ascending
-    ids_pred = pred_df['Id'].to_list()
-    y_preds = pred_df['SepsisLabel'].to_list()
+    pred_df = pd.read_csv(prediction_path, header=None)  # should be sorted by ids ascending
+    ids_pred = pred_df.iloc[:, 0].to_list()
+    y_preds = pred_df.iloc[:, 1].to_list()
     filenames = get_filenames(test_directory_path)
     y_true = []
     ids_true = []
