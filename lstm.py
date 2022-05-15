@@ -378,8 +378,9 @@ def predict(test_directory_path, features_to_use=used_features, is_shap=False):
         # y_train = np.load('lstm_data/y_train.npy')
         # train_pids = np.load('lstm_data/train_pids.npy')
         # data = shap.kmeans(x_test, 100).data
-        explainer = shap.DeepExplainer(model, x_train[0].reshape(1, x_train.shape[1], x_train.shape[2]))
-        x_test = x_test[0].reshape(x_test.shape[1], x_test.shape[2])
+        explainer = shap.DeepExplainer(model, x_train)
+        # explainer = shap.DeepExplainer(model, x_train[0].reshape(1, x_train.shape[1], x_train.shape[2]))
+        # x_test = x_test[0].reshape(x_test.shape[1], x_test.shape[2])
         shap_values = explainer.shap_values(x_test[0])
 
 
