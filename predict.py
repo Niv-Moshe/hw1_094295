@@ -39,3 +39,4 @@ if __name__ == "__main__":
                         'e.g., python test.py test_path')
     test_path = sys.argv[1]
     predict(test_path)
+

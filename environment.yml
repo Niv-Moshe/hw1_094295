@@ -1,4 +1,4 @@
-name: hw1_env
+name: hw1_env_final
 channels:
   - defaults
 dependencies:
