@@ -255,14 +255,14 @@ def train(features_to_use=used_features, make_matrix=True):
     print("Pre-processing...")
     if make_matrix:
         x_train, y_train, train_pids = dfs_to_matrix(train_df_list, features_to_use)
-        np.save('lstm_data/x_train.npy', x_train)
-        np.save('lstm_data/y_train.npy', y_train)
-        np.save('lstm_data/train_pids.npy', train_pids)
+        # np.save('lstm_data/x_train.npy', x_train)
+        # np.save('lstm_data/y_train.npy', y_train)
+        # np.save('lstm_data/train_pids.npy', train_pids)
     else:
         print(f"Loading lstm data")
-        x_train = np.load('lstm_data/x_train.npy')
-        y_train = np.load('lstm_data/y_train.npy')
-        train_pids = np.load('lstm_data/train_pids.npy')
+        # x_train = np.load('lstm_data/x_train.npy')
+        # y_train = np.load('lstm_data/y_train.npy')
+        # train_pids = np.load('lstm_data/train_pids.npy')
 
 
     print(f"Train shapes: {x_train.shape=}, {y_train.shape=}")
@@ -430,7 +430,7 @@ def check_predictions(prediction_path, test_directory_path):
 
 
 if __name__ == "__main__":
-    # train(make_matrix=False)
+    # train(make_matrix=True)
     # predict('data/test', is_shap=False)
     # check_predictions('lstm_prediction.csv', 'data/test')
     pass
