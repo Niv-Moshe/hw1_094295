@@ -251,7 +251,7 @@ def check_predictions(prediction_path, test_directory_path):
 
 
 if __name__ == "__main__":
-    train()
-    predict('data/test', is_shap=True)
+    # train()
+    # predict('data/test', is_shap=True)
     # check_predictions('mlp_prediction.csv', 'data/test')
     pass

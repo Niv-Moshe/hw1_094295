@@ -431,7 +431,7 @@ def check_predictions(prediction_path, test_directory_path):
 
 if __name__ == "__main__":
     # train(make_matrix=False)
-    predict('data/test', is_shap=False)
-    check_predictions('lstm_prediction.csv', 'data/test')
-
+    # predict('data/test', is_shap=False)
+    # check_predictions('lstm_prediction.csv', 'data/test')
+    pass
 
