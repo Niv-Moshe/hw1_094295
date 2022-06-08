@@ -11,7 +11,6 @@ def predict(test_directory_path, features_to_use=used_features):
     print()
     print("Testing...")
     filenames = get_filenames(test_directory_path)
-    print(filenames)
     _, _, test_df_list = read_data(filenames)
     print("Pre-processing")
     x_test, y_test, test_pids = dfs_to_matrix(test_df_list, features_to_use)
