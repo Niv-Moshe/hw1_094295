@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="student@dpa2021s-0011.eastus.cloudapp.azure.com:22">
+  <component name="PublishConfigData" autoUpload="Always" serverName="student@dpagpu2021s-0011.eastus.cloudapp.azure.com:22">
     <serverData>
       <paths name="student@104.211.32.146:22">
         <serverdata>
@@ -223,6 +223,13 @@
         <serverdata>
           <mappings>
             <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="student@dpagpu2021s-0011.eastus.cloudapp.azure.com:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/student/HW1/hw1_094295" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

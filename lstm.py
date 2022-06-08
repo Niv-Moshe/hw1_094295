@@ -55,7 +55,7 @@ def read_data(filenames):
     healthy = []
     for filename in tqdm(filenames):
         with filename.open() as fp:
-            patient_id = str(filename).split("_")[1].split(".")[0]
+            patient_id = str(filename).split("_")[-1].split(".")[0]
             df = pd.read_csv(fp, sep='|')
             df['pid'] = len(df) * [int(patient_id)]
             if 1 in list(df['SepsisLabel']):

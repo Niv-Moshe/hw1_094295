@@ -10,7 +10,9 @@ def predict(test_directory_path, features_to_use=used_features):
     ########### Test: #############
     print()
     print("Testing...")
-    _, _, test_df_list = read_data(get_filenames(test_directory_path))
+    filenames = get_filenames(test_directory_path)
+    print(filenames)
+    _, _, test_df_list = read_data(filenames)
     print("Pre-processing")
     x_test, y_test, test_pids = dfs_to_matrix(test_df_list, features_to_use)
     print(f"Test shapes: {x_test.shape=}, {y_test.shape=}")
@@ -34,9 +36,9 @@ def predict(test_directory_path, features_to_use=used_features):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        raise Exception('Include the test directory as arguments, '
-                        'e.g., python test.py test_path')
-    test_path = sys.argv[1]
+    # if len(sys.argv) != 2:
+    #     raise Exception('Include the test directory as arguments, '
+    #                     'e.g., python test.py test_path')
+    test_path = '/home/student/HW1/sec_test'  # sys.argv[1]
     predict(test_path)
 
