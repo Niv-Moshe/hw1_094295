@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from tensorflow import keras
-from lstm import used_features, f1_score_mine, read_data, get_filenames, dfs_to_matrix
+from lstm import used_features, f1_score_mine, read_data, get_filenames, dfs_to_matrix, check_predictions
 import sys
 
 
@@ -35,9 +35,10 @@ def predict(test_directory_path, features_to_use=used_features):
 
 
 if __name__ == "__main__":
-    # if len(sys.argv) != 2:
-    #     raise Exception('Include the test directory as arguments, '
-    #                     'e.g., python test.py test_path')
-    test_path = '/home/student/HW1/sec_test'  # sys.argv[1]
+    if len(sys.argv) != 2:
+        raise Exception('Include the test directory as arguments, '
+                        'e.g., python test.py test_path')
+    test_path = sys.argv[1]
     predict(test_path)
+    # check_predictions('prediction.csv', test_path)
 

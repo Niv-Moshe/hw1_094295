@@ -236,7 +236,7 @@ def check_predictions(prediction_path, test_directory_path):
     # messy true ids
     for filename in tqdm(filenames):
         with filename.open() as fp:
-            patient_id = str(filename).split("_")[1].split(".")[0]
+            patient_id = str(filename).split("_")[-1].split(".")[0]
             ids_true.append(int(patient_id))
             df = pd.read_csv(fp, sep='|')
             if 1 in list(df['SepsisLabel']):
